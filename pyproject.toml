@@ -1,0 +1,60 @@
+[build-system]
+requires      = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["./src"]  # list of folders that contain the packages (["."] by default)
+include = ["*"]  # package names should match these glob patterns (["*"] by default)
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml"]
+
+[project]
+name = "tpch-datagen"
+version = "0.0.1"
+description = "A package which makes it easy to generate TPC-H data in parallel with DuckDB"
+readme = "README.md"
+authors = [{ name = "Philip Moore", email = "prmoore77@hotmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["tpc", "tpch", "tpc-h", "data", "generator", "datagen"]
+dependencies = [
+    "click==8.1.*",
+    "duckdb==1.1.*",
+    "munch==4.0.*",
+    "codetiming==1.4.*",
+    "python-dotenv==1.0.*",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["bumpver", "pip-tools", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/gizmodata/tpch-datagen"
+
+[project.scripts]
+tpch-datagen = "tpch_datagen.datagen:click_datagen"
+
+[tool.bumpver]
+current_version = "0.0.1"
+version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = true
+tag = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    '^version = "{version}"$',
+    '^current_version = "{version}"$',
+]
+"src/tpch_datagen/__init__.py" = [
+    '^__version__ = "{version}"$',
+]
