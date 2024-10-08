@@ -6,6 +6,7 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from codetiming import Timer
 
 from . import __version__ as tpch_datagen_version
 from .config import DATA_DIR, WORK_DIR, DEFAULT_NUM_CHUNKS, DEFAULT_NUM_PROCESSES
@@ -13,6 +14,7 @@ from .logger import logger
 from .utils import get_printable_number
 
 # Constants
+TIMER_TEXT = "{name}: Elapsed time: {:.4f} seconds"
 TPCH_SMALL_TABLE_LIST = [
     "region",
     "nation"
@@ -53,39 +55,44 @@ def generate_chunk(scale_factor: float,
                    ):
     logger.info(msg=f"generate_chunk called with args: {locals()}")
 
-    try:
-        with TemporaryDirectory(dir=work_directory) as local_database_dir:
-            # Get a DuckDB database connection
-            conn = duckdb.connect(database=f"{local_database_dir}/tpch.db")
+    with Timer(name=f"Generate chunk: {chunk_number} of: {num_chunks}",
+               text=TIMER_TEXT,
+               initial_text=True,
+               logger=logger.info
+               ):
+        try:
+            with TemporaryDirectory(dir=work_directory) as local_database_dir:
+                # Get a DuckDB database connection
+                conn = duckdb.connect(database=f"{local_database_dir}/tpch.db")
 
-            # Set the number of threads
-            conn.execute(f"SET threads={duckdb_threads};")
+                # Set the number of threads
+                conn.execute(f"SET threads={duckdb_threads};")
 
-            # Load the TPCH extension needed to generate the data...
-            conn.load_extension(extension="tpch")
+                # Load the TPCH extension needed to generate the data...
+                conn.load_extension(extension="tpch")
 
-            # Generate the data
-            execute_query(conn=conn,
-                          query=f"CALL dbgen(sf={scale_factor}, children={num_chunks}, step={chunk_number})"
-                          )
-
-            # Export the data to parquet
-            for table_name in table_list:
+                # Generate the data
                 execute_query(conn=conn,
-                              query=f"""
-                                 COPY (FROM {table_name})
-                                 TO '{data_directory}/{table_name}/'
-                                 (OVERWRITE_OR_IGNORE true,
-                                  FILENAME_PATTERN '{table_name}_{chunk_number}_',
-                                  FORMAT parquet,
-                                  COMPRESSION '{compression_method}',
-                                  PER_THREAD_OUTPUT {str(per_thread_output).lower()},
-                                  FILE_SIZE_BYTES '{file_size_bytes}'
-                                 )"""
+                              query=f"CALL dbgen(sf={scale_factor}, children={num_chunks}, step={chunk_number})"
                               )
-    except Exception as e:
-        logger.error(msg=f"Error generating chunk: {str(e)}")
-        raise e
+
+                # Export the data to parquet
+                for table_name in table_list:
+                    execute_query(conn=conn,
+                                  query=f"""
+                                     COPY (FROM {table_name})
+                                     TO '{data_directory}/{table_name}/'
+                                     (OVERWRITE_OR_IGNORE true,
+                                      FILENAME_PATTERN '{table_name}_{chunk_number}_',
+                                      FORMAT parquet,
+                                      COMPRESSION '{compression_method}',
+                                      PER_THREAD_OUTPUT {str(per_thread_output).lower()},
+                                      FILE_SIZE_BYTES '{file_size_bytes}'
+                                     )"""
+                                  )
+        except Exception as e:
+            logger.error(msg=f"Error generating chunk: {str(e)}")
+            raise e
 
 
 def datagen(version: bool,
@@ -105,66 +112,71 @@ def datagen(version: bool,
 
     logger.info(msg=f"click_datagen called with args: {locals()}")
 
-    if not scale_factor:
-        raise RuntimeError("You must specify a scale factor to generate data.")
+    with Timer(name=f"Run TPC-H Datagen to generate TPC-H data at scale factor: {scale_factor}",
+               text=TIMER_TEXT,
+               initial_text=True,
+               logger=logger.info
+               ):
+        if not scale_factor:
+            raise RuntimeError("You must specify a scale factor to generate data.")
 
-    # Export the data
-    target_directory = Path(f"{data_directory}/tpch/sf={get_printable_number(num=scale_factor)}")
+        # Export the data
+        target_directory = Path(f"{data_directory}/tpch/sf={get_printable_number(num=scale_factor)}")
 
-    if target_directory.exists():
-        if overwrite:
-            logger.warning(msg=f"Directory: {target_directory.as_posix()} exists, removing...")
-            shutil.rmtree(path=target_directory.as_posix())
-        else:
-            raise RuntimeError(f"Directory: {target_directory.as_posix()} exists, aborting.")
+        if target_directory.exists():
+            if overwrite:
+                logger.warning(msg=f"Directory: {target_directory.as_posix()} exists, removing...")
+                shutil.rmtree(path=target_directory.as_posix())
+            else:
+                raise RuntimeError(f"Directory: {target_directory.as_posix()} exists, aborting.")
 
-    target_directory.mkdir(parents=True, exist_ok=True)
+        target_directory.mkdir(parents=True, exist_ok=True)
 
-    # Process nation and region tables first - b/c they are small
-    generate_chunk(scale_factor=0.01,
-                   data_directory=target_directory,
-                   work_directory=work_directory,
-                   chunk_number=0,
-                   num_chunks=1,
-                   duckdb_threads=duckdb_threads,
-                   per_thread_output=False,
-                   compression_method=compression_method,
-                   file_size_bytes=file_size_bytes,
-                   table_list=TPCH_SMALL_TABLE_LIST
-                   )
+        # Process nation and region tables first - b/c they are small
+        generate_chunk(scale_factor=0.01,
+                       data_directory=target_directory,
+                       work_directory=work_directory,
+                       chunk_number=0,
+                       num_chunks=1,
+                       duckdb_threads=duckdb_threads,
+                       per_thread_output=False,
+                       compression_method=compression_method,
+                       file_size_bytes=file_size_bytes,
+                       table_list=TPCH_SMALL_TABLE_LIST
+                       )
 
-    # Process the chunks
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        results = []
-        for i in range(num_chunks):
-            result = pool.apply_async(generate_chunk,
-                                      kwds=dict(scale_factor=scale_factor,
-                                                data_directory=target_directory,
-                                                work_directory=work_directory,
-                                                chunk_number=i,
-                                                num_chunks=num_chunks,
-                                                duckdb_threads=duckdb_threads,
-                                                per_thread_output=per_thread_output,
-                                                compression_method=compression_method,
-                                                file_size_bytes=file_size_bytes,
-                                                table_list=TPCH_LARGE_TABLE_LIST
-                                                ),
-                                      error_callback=error_callback
-                                      )
-            results.append(result)
+        # Process the chunks
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            results = []
+            for i in range(num_chunks):
+                result = pool.apply_async(generate_chunk,
+                                          kwds=dict(scale_factor=scale_factor,
+                                                    data_directory=target_directory,
+                                                    work_directory=work_directory,
+                                                    chunk_number=i,
+                                                    num_chunks=num_chunks,
+                                                    duckdb_threads=duckdb_threads,
+                                                    per_thread_output=per_thread_output,
+                                                    compression_method=compression_method,
+                                                    file_size_bytes=file_size_bytes,
+                                                    table_list=TPCH_LARGE_TABLE_LIST
+                                                    ),
+                                          error_callback=error_callback
+                                          )
+                results.append(result)
 
-        # Collect results (this will block until all jobs finish or one fails)
-        try:
-            for result in results:
-                result.get()
+            # Collect results (this will block until all jobs finish or one fails)
+            try:
+                for result in results:
+                    result.get()
 
-        except Exception as e:
-            logger.error(msg=f"Job failure encountered: {str(e)}")
-            pool.terminate()
-            raise e
+            except Exception as e:
+                logger.error(msg=f"Job failure encountered: {str(e)}")
+                pool.terminate()
+                raise e
 
-        else:
-            logger.info(msg="All jobs completed successfully.")
+            else:
+                logger.info(msg="All jobs completed successfully.")
 
 
 @click.command()
