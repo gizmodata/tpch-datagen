@@ -77,8 +77,9 @@ Options:
   --num-processes INTEGER         The maximum number of processes for the
                                   multi-processing pool to use for data
                                   generation.  [default: 10; required]
-  --duckdb-threads INTEGER        The number of processes to use for data
-                                  generation.  [default: 1; required]
+  --duckdb-threads INTEGER        The number of DuckDB threads to use for data
+                                  generation (within each job process).
+                                  [default: 1; required]
   --per-thread-output / --no-per-thread-output
                                   Controls whether to write the output to a
                                   single file or multiple files (for each

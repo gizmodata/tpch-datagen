@@ -240,7 +240,7 @@ def datagen(version: bool,
     default=math.ceil(os.cpu_count() / DEFAULT_NUM_PROCESSES),
     show_default=True,
     required=True,
-    help="The number of processes to use for data generation."
+    help="The number of DuckDB threads to use for data generation (within each job process)."
 )
 @click.option(
     "--per-thread-output/--no-per-thread-output",
