@@ -59,7 +59,7 @@ tpch-datagen --help
 Usage: tpch-datagen [OPTIONS]
 
 Options:
-  --version / --no-version        Prints the Spark Connect Proxy version and
+  --version / --no-version        Prints the TPC-H Datagen package version and
                                   exits.  [required]
   --scale-factor INTEGER          The TPC-H Scale Factor to use for data
                                   generation.

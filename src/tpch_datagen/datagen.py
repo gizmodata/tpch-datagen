@@ -174,7 +174,7 @@ def datagen(version: bool,
     default=False,
     show_default=False,
     required=True,
-    help="Prints the Spark Connect Proxy version and exits."
+    help="Prints the TPC-H Datagen package version and exits."
 )
 @click.option(
     "--scale-factor",
