@@ -27,7 +27,7 @@ classifiers = [
 keywords = ["tpc", "tpch", "tpc-h", "data", "generator", "datagen"]
 dependencies = [
     "click==8.1.*",
-    "duckdb==1.1.*",
+    "duckdb==1.2.1",
     "munch==4.0.*",
     "codetiming==1.4.*",
     "python-dotenv==1.0.*",
