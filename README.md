@@ -1,4 +1,4 @@
-# tpch-datagen
+# tpch-datagen - by [GizmoData](https://gizmodata.com)™
 A utility to generate TPC-H data in parallel using [DuckDB](https://duckdb.org) and multi-processing
 
 [<img src="https://img.shields.io/badge/GitHub-gizmodata%2Ftpch--datagen-blue.svg?logo=Github">](https://github.com/gizmodata/tpch-datagen)

@@ -104,12 +104,12 @@ def datagen(version: bool,
             compression_method: str,
             file_size_bytes: str):
     if version:
-        logger.info(msg=f"TPC-H DataGen - Version: {tpch_datagen_version}")
+        logger.info(msg=f"TPC-H DataGen by GizmoData™ - Version: {tpch_datagen_version}")
         return
 
     logger.info(msg=f"click_datagen called with args: {locals()}")
 
-    with Timer(name=f"Run TPC-H Datagen to generate TPC-H data at scale factor: {scale_factor}",
+    with Timer(name=f"Run TPC-H Datagen by GizmoData™ - to generate TPC-H data at scale factor: {scale_factor}",
                text=TIMER_TEXT,
                initial_text=True,
                logger=logger.info
