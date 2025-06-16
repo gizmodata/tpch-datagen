@@ -68,9 +68,6 @@ def generate_chunk(scale_factor: float,
                 # Set the number of threads
                 conn.execute(f"SET threads={duckdb_threads};")
 
-                # Load the TPCH extension needed to generate the data...
-                conn.load_extension(extension="tpch")
-
                 # Generate the data
                 execute_query(conn=conn,
                               query=f"CALL dbgen(sf={scale_factor}, children={num_chunks}, step={chunk_number})"
