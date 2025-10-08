@@ -51,6 +51,7 @@ def generate_chunk(scale_factor: float,
                    per_thread_output: bool,
                    compression_method: str,
                    file_size_bytes: str,
+                   parquet_version: str,
                    table_list: list
                    ):
     logger.info(msg=f"generate_chunk called with args: {locals()}")
@@ -82,9 +83,10 @@ def generate_chunk(scale_factor: float,
                                      (OVERWRITE_OR_IGNORE true,
                                       FILENAME_PATTERN '{table_name}_{chunk_number}_',
                                       FORMAT parquet,
-                                      COMPRESSION '{compression_method}',
+                                      COMPRESSION {compression_method},
                                       PER_THREAD_OUTPUT {str(per_thread_output).lower()},
-                                      FILE_SIZE_BYTES '{file_size_bytes}'
+                                      FILE_SIZE_BYTES '{file_size_bytes}',
+                                      PARQUET_VERSION {parquet_version}
                                      )"""
                                   )
         except Exception as e:
@@ -102,7 +104,8 @@ def datagen(version: bool,
             duckdb_threads: int,
             per_thread_output: bool,
             compression_method: str,
-            file_size_bytes: str):
+            file_size_bytes: str,
+            parquet_version: str):
     if version:
         logger.info(msg=f"TPC-H DataGen by GizmoData™ - Version: {tpch_datagen_version}")
         return
@@ -139,6 +142,7 @@ def datagen(version: bool,
                        per_thread_output=False,
                        compression_method=compression_method,
                        file_size_bytes=file_size_bytes,
+                       parquet_version=parquet_version,
                        table_list=TPCH_SMALL_TABLE_LIST
                        )
 
@@ -156,6 +160,7 @@ def datagen(version: bool,
                                                     per_thread_output=per_thread_output,
                                                     compression_method=compression_method,
                                                     file_size_bytes=file_size_bytes,
+                                                    parquet_version=parquet_version,
                                                     table_list=TPCH_LARGE_TABLE_LIST
                                                     ),
                                           error_callback=error_callback
@@ -263,6 +268,14 @@ def datagen(version: bool,
     required=True,
     help="The target file size for the parquet files generated."
 )
+@click.option(
+    "--parquet-version",
+    type=click.Choice(["v1", "v2"]),
+    default="v2",
+    show_default=True,
+    required=True,
+    help="The version of Parquet to use for the parquet files generated."
+)
 def click_datagen(version: bool,
                   scale_factor: int,
                   data_directory: str,
@@ -273,7 +286,8 @@ def click_datagen(version: bool,
                   duckdb_threads: int,
                   per_thread_output: bool,
                   compression_method: str,
-                  file_size_bytes: str
+                  file_size_bytes: str,
+                  parquet_version: str
                   ):
     datagen(**locals())
 

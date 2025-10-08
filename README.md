@@ -91,6 +91,9 @@ Options:
                                   required]
   --file-size-bytes TEXT          The target file size for the parquet files
                                   generated.  [default: 100m; required]
+  --parquet-version [v1|v2]       The version of Parquet to use for the
+                                  parquet files generated.  [default: v2;
+                                  required]
   --help                          Show this message and exit.
 ```
 
