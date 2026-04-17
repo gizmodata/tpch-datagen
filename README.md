@@ -5,7 +5,7 @@ A utility to generate TPC-H data in parallel using [DuckDB](https://duckdb.org) 
 [![tpch-datagen-ci](https://github.com/gizmodata/tpch-datagen/actions/workflows/ci.yml/badge.svg)](https://github.com/gizmodata/tpch-datagen/actions/workflows/ci.yml)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/tpch-datagen)](https://pypi.org/project/tpch-datagen/)
 [![PyPI version](https://badge.fury.io/py/tpch-datagen.svg)](https://badge.fury.io/py/tpch-datagen)
-[![PyPI Downloads](https://img.shields.io/pypi/dm/tpch-datagen.svg)](https://pypi.org/project/tpch-datagen/)
+[![PyPI Downloads](https://img.shields.io/pepy/dt/tpch-datagen.svg)](https://pypi.org/project/tpch-datagen/)
 
 # Why?
 Because generating TPC-H data can be time-consuming and resource-intensive.  This project provides a way to generate TPC-H data in parallel using DuckDB and multi-processing.
